@@ -228,6 +228,13 @@
   .cod-disclaimer{ font-size:11.5px; color:var(--ink-soft); }
   .toast{ position:fixed; left:50%; bottom:24px; transform:translate(-50%,20px); background:var(--ink); color:#fff; padding:12px 20px; border-radius:999px; font-size:13.5px; font-weight:600; opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease; z-index:60; }
   .toast.show{ opacity:1; transform:translate(-50%,0); }
+
+  /* ---------- Floating WhatsApp button ---------- */
+  .wa-float{ position:fixed; right:20px; bottom:20px; z-index:45; width:58px; height:58px; border-radius:999px; background:#25D366; color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px rgba(0,0,0,0.22); transition:transform .15s ease, box-shadow .15s ease; }
+  .wa-float:hover{ transform:translateY(-2px) scale(1.05); box-shadow:0 12px 28px rgba(0,0,0,0.28); }
+  .wa-float svg{ width:30px; height:30px; stroke:#fff; }
+  .wa-float::after{ content:''; position:absolute; inset:0; border-radius:999px; border:2px solid #25D366; animation:wa-pulse 2.4s ease-out infinite; }
+  @keyframes wa-pulse{ 0%{ transform:scale(1); opacity:0.7; } 100%{ transform:scale(1.55); opacity:0; } }
 </style>
 </head>
 <body>
@@ -407,6 +414,10 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<a class="wa-float" id="waFloat" href="https://wa.me/8801830962035" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp" data-aria="a11y_wa_chat">
+  <svg><use href="#icon-whatsapp"/></svg>
+</a>
+
 <script>
 /* ============ EDIT YOUR PRODUCTS HERE ============ */
 const PRODUCTS = [
@@ -461,6 +472,7 @@ const I18N = {
     toast_empty:'Add an item to your chit first.', toast_whatsapp:'Opening WhatsApp…', toast_cod:'Opening WhatsApp to confirm your order…', toast_added:'Added to your chit.',
     a11y_cart:'Open cart', a11y_menu:'Menu', a11y_close:'Close cart', a11y_chit:'Order chit', a11y_fb:'Facebook', a11y_wa:'WhatsApp',
     sync_cart:'Chit updated in another tab.', sync_lang:'Language changed in another tab.', sync_cat:'Category changed in another tab.',
+    wa_msg:'Hello Dream Pharmacy! I have a question.', a11y_wa_chat:'Chat with us on WhatsApp',
     about_eyebrow:'OUR PHARMACIST', about_role:'Diploma in Medical Assistant (DMA)',
     about_body:'Graduate of Noakhali Paramedical College (MATS). Former Medical Assistant at the 250 Bed General Hospital, Noakhali, and former Emergency Medical Assistant at Kashipur Al-Habib Hospital and Kashipur Life Line Hospital.',
     about_reg:'Registration No. 233141',
@@ -489,6 +501,7 @@ const I18N = {
     toast_empty:'প্রথমে আপনার চিটে একটি পণ্য যোগ করুন।', toast_whatsapp:'হোয়াটসঅ্যাপ খোলা হচ্ছে…', toast_cod:'অর্ডার নিশ্চিত করতে হোয়াটসঅ্যাপ খোলা হচ্ছে…', toast_added:'আপনার চিটে যোগ হয়েছে।',
     a11y_cart:'কার্ট খুলুন', a11y_menu:'মেনু', a11y_close:'কার্ট বন্ধ করুন', a11y_chit:'অর্ডার চিট', a11y_fb:'ফেসবুক', a11y_wa:'হোয়াটসঅ্যাপ',
     sync_cart:'অন্য ট্যাবে অর্ডার চিট আপডেট হয়েছে।', sync_lang:'অন্য ট্যাবে ভাষা পরিবর্তন হয়েছে।', sync_cat:'অন্য ট্যাবে ক্যাটাগরি পরিবর্তন হয়েছে।',
+    wa_msg:'আসসালামু আলাইকুম, ড্রিম ফার্মেসি! আমার একটি প্রশ্ন আছে।', a11y_wa_chat:'হোয়াটসঅ্যাপে চ্যাট করুন',
     about_eyebrow:'আমাদের ফার্মাসিস্ট', about_role:'ডিপ্লোমা ইন মেডিকেল অ্যাসিস্ট্যান্ট (DMA)',
     about_body:'নোয়াখালী প্যারামেডিকেল কলেজ (MATS) থেকে পাস। প্রাক্তন মেডিকেল অ্যাসিস্ট্যান্ট, ২৫০ শয্যা জেনারেল হাসপাতাল, নোয়াখালী এবং প্রাক্তন ইমার্জেন্সি মেডিকেল অ্যাসিস্ট্যান্ট, কাশিপুর আল-হাবিব হাসপাতাল ও কাশিপুর লাইফ লাইন হাসপাতাল।',
     about_reg:'রেজিস্ট্রেশন নম্বর ২৩৩১৪১',
@@ -579,6 +592,8 @@ function applyStaticI18n(){
     const key = el.getAttribute('data-aria');
     if(I18N[state.lang][key] !== undefined) el.setAttribute('aria-label', I18N[state.lang][key]);
   });
+  const waFloat = document.getElementById('waFloat');
+  if(waFloat) waFloat.href = `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(t('wa_msg'))}`;
 }
 
 function renderCategories(){
