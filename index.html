@@ -58,6 +58,7 @@
 
   .container{ max-width:1160px; margin:0 auto; padding:0 20px; }
   .visually-hidden{ position:absolute; width:1px;height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+  body.scroll-lock{ overflow:hidden; }
 
   /* ---------- Header ---------- */
   .site-header{ position:sticky; top:0; z-index:40; background:rgba(255,255,255,0.92); backdrop-filter:blur(6px); border-bottom:1px solid var(--line); }
@@ -470,6 +471,8 @@ const I18N = {
 };
 
 const state = { lang:'en', activeCat:'all', cart:{}, orderNo: 'DP-' + Math.floor(1000+Math.random()*9000) };
+const codState = { open:false, name:'', phone:'', address:'', note:'' };
+let lastFocused = null;
 
 function t(key){ return I18N[state.lang][key] ?? key; }
 function fmt(n){ return '৳' + n.toLocaleString('en-IN'); }
@@ -575,6 +578,14 @@ function renderCart(){
   }
 
   const foot = document.getElementById('chitFoot');
+  if(ids.length===0){
+    codState.open = false; codState.name = codState.phone = codState.address = codState.note = '';
+    foot.innerHTML = `
+      <div class="subtotal-row"><span>${t('subtotal')}</span><span class="mono">${fmt(0)}</span></div>
+      <button class="btn btn-whatsapp btn-block" disabled><svg><use href="#icon-whatsapp"/></svg>${t('btn_whatsapp')}</button>
+    `;
+    return;
+  }
   foot.innerHTML = `
     <div class="subtotal-row"><span>${t('subtotal')}</span><span class="mono">${fmt(cartSubtotal())}</span></div>
     ${cartHasRx() ? `<div class="rx-note">${t('rx_note')}</div>` : ''}
@@ -590,15 +601,25 @@ function renderCart(){
       <p class="cod-disclaimer">${t('cod_disclaimer')}</p>
     </form>
   `;
+  const codForm = document.getElementById('codForm');
   document.getElementById('btnWhatsapp').addEventListener('click', ()=> sendOrder(null));
-  document.getElementById('codToggle').addEventListener('click', ()=> document.getElementById('codForm').classList.toggle('open'));
-  document.getElementById('codForm').addEventListener('submit', e=>{
+  document.getElementById('codToggle').addEventListener('click', ()=>{
+    codState.open = !codState.open;
+    codForm.classList.toggle('open', codState.open);
+  });
+  ['codName','codPhone','codAddress','codNote'].forEach(id=>{
+    const el = document.getElementById(id);
+    el.value = codState[id] || '';
+    el.addEventListener('input', ()=>{ codState[id] = el.value; });
+  });
+  codForm.classList.toggle('open', codState.open);
+  codForm.addEventListener('submit', e=>{
     e.preventDefault();
     const customer = {
-      name: document.getElementById('codName').value.trim(),
-      phone: document.getElementById('codPhone').value.trim(),
-      address: document.getElementById('codAddress').value.trim(),
-      note: document.getElementById('codNote').value.trim()
+      name: codState.name.trim(),
+      phone: codState.phone.trim(),
+      address: codState.address.trim(),
+      note: codState.note.trim()
     };
     sendOrder(customer);
   });
@@ -636,8 +657,30 @@ function showToast(text){
   toastTimer = setTimeout(()=> el.classList.remove('show'), 2600);
 }
 
-function openDrawer(){ document.getElementById('cartDrawer').classList.add('open'); document.getElementById('overlay').classList.add('open'); }
-function closeDrawer(){ document.getElementById('cartDrawer').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
+function openDrawer(){
+  lastFocused = document.activeElement;
+  document.getElementById('cartDrawer').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+  document.body.classList.add('scroll-lock');
+  document.getElementById('closeCart').focus();
+}
+function closeDrawer(){
+  const drawer = document.getElementById('cartDrawer');
+  if(!drawer.classList.contains('open')) return;
+  drawer.classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+  document.body.classList.remove('scroll-lock');
+  if(lastFocused && document.body.contains(lastFocused)) lastFocused.focus();
+  lastFocused = null;
+}
+function closeMobileNav(){
+  const nav = document.getElementById('mobileNav');
+  if(!nav.classList.contains('open')) return;
+  nav.classList.remove('open');
+  const btn = document.getElementById('hamburgerBtn');
+  btn.setAttribute('aria-expanded','false');
+  btn.querySelector('use').setAttribute('href','#icon-menu');
+}
 
 document.getElementById('cartBtn').addEventListener('click', openDrawer);
 document.getElementById('closeCart').addEventListener('click', closeDrawer);
@@ -647,13 +690,37 @@ document.getElementById('hamburgerBtn').addEventListener('click', ()=>{
   const btn = document.getElementById('hamburgerBtn');
   const open = nav.classList.toggle('open');
   btn.setAttribute('aria-expanded', open);
+  btn.querySelector('use').setAttribute('href', open ? '#icon-close' : '#icon-menu');
 });
-document.querySelectorAll('.mobile-nav a').forEach(a=> a.addEventListener('click', ()=> document.getElementById('mobileNav').classList.remove('open')));
+document.querySelectorAll('.mobile-nav a').forEach(a=> a.addEventListener('click', closeMobileNav));
 document.querySelectorAll('.lang-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     state.lang = btn.dataset.lang;
     applyStaticI18n(); renderCategories(); renderProducts(); renderCart();
   });
+});
+
+document.addEventListener('keydown', e=>{
+  if(e.key !== 'Escape') return;
+  closeDrawer();
+  closeMobileNav();
+});
+
+const drawerEl = document.getElementById('cartDrawer');
+drawerEl.addEventListener('keydown', e=>{
+  if(e.key!=='Tab' || !drawerEl.classList.contains('open')) return;
+  const items = drawerEl.querySelectorAll('button:not(:disabled), a, input, textarea, select, [tabindex]:not([tabindex="-1"])');
+  if(!items.length) return;
+  const first = items[0], last = items[items.length-1];
+  if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+});
+
+document.addEventListener('click', e=>{
+  const nav = document.getElementById('mobileNav');
+  const btn = document.getElementById('hamburgerBtn');
+  if(!nav.classList.contains('open') || nav.contains(e.target) || btn.contains(e.target)) return;
+  closeMobileNav();
 });
 
 if('IntersectionObserver' in window){
