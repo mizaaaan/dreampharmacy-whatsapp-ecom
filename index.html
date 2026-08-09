@@ -500,6 +500,16 @@ const codState = { open:false, name:'', phone:'', address:'', note:'' };
 let lastFocused = null;
 const CART_KEY = 'dp_cart';
 const LANG_KEY = 'dp_lang';
+const CAT_KEY = 'dp_cat';
+function saveCat(){
+  try{ localStorage.setItem(CAT_KEY, state.activeCat); }catch(e){ /* storage unavailable */ }
+}
+function restoreCat(){
+  try{
+    const v = localStorage.getItem(CAT_KEY);
+    if(CATEGORIES.some(c=>c.key===v)) state.activeCat = v;
+  }catch(e){ /* storage unavailable */ }
+}
 function saveLang(){
   try{ localStorage.setItem(LANG_KEY, state.lang); }catch(e){ /* storage unavailable */ }
 }
@@ -556,7 +566,7 @@ function renderCategories(){
   const row = document.getElementById('catRow');
   row.innerHTML = CATEGORIES.map(c=>`<button class="cat-chip ${state.activeCat===c.key?'active':''}" data-cat="${c.key}">${state.lang==='en'?c.en:c.bn}</button>`).join('');
   row.querySelectorAll('.cat-chip').forEach(btn=>{
-    btn.addEventListener('click', ()=>{ state.activeCat = btn.dataset.cat; renderCategories(); renderProducts(); });
+    btn.addEventListener('click', ()=>{ state.activeCat = btn.dataset.cat; saveCat(); renderCategories(); renderProducts(); });
   });
 }
 
@@ -806,6 +816,13 @@ document.addEventListener('click', e=>{
 });
 
 window.addEventListener('storage', e=>{
+  if(e.key === CAT_KEY){
+    if(CATEGORIES.some(c=>c.key===e.newValue)){
+      state.activeCat = e.newValue;
+      renderCategories(); renderProducts();
+    }
+    return;
+  }
   if(e.key === LANG_KEY){
     if(e.newValue === 'en' || e.newValue === 'bn'){
       state.lang = e.newValue;
@@ -832,6 +849,7 @@ if('IntersectionObserver' in window){
 }
 
 restoreLang();
+restoreCat();
 applyStaticI18n();
 restoreCart();
 renderCategories();
