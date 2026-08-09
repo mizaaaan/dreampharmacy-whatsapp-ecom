@@ -460,6 +460,7 @@ const I18N = {
     btn_whatsapp:'Send Order on WhatsApp', btn_call:'Call to Order',
     toast_empty:'Add an item to your chit first.', toast_whatsapp:'Opening WhatsApp…', toast_cod:'Opening WhatsApp to confirm your order…', toast_added:'Added to your chit.',
     a11y_cart:'Open cart', a11y_menu:'Menu', a11y_close:'Close cart', a11y_chit:'Order chit', a11y_fb:'Facebook', a11y_wa:'WhatsApp',
+    sync_cart:'Chit updated in another tab.', sync_lang:'Language changed in another tab.', sync_cat:'Category changed in another tab.',
     about_eyebrow:'OUR PHARMACIST', about_role:'Diploma in Medical Assistant (DMA)',
     about_body:'Graduate of Noakhali Paramedical College (MATS). Former Medical Assistant at the 250 Bed General Hospital, Noakhali, and former Emergency Medical Assistant at Kashipur Al-Habib Hospital and Kashipur Life Line Hospital.',
     about_reg:'Registration No. 233141',
@@ -487,6 +488,7 @@ const I18N = {
     btn_whatsapp:'হোয়াটসঅ্যাপে অর্ডার পাঠান', btn_call:'কল করে অর্ডার করুন',
     toast_empty:'প্রথমে আপনার চিটে একটি পণ্য যোগ করুন।', toast_whatsapp:'হোয়াটসঅ্যাপ খোলা হচ্ছে…', toast_cod:'অর্ডার নিশ্চিত করতে হোয়াটসঅ্যাপ খোলা হচ্ছে…', toast_added:'আপনার চিটে যোগ হয়েছে।',
     a11y_cart:'কার্ট খুলুন', a11y_menu:'মেনু', a11y_close:'কার্ট বন্ধ করুন', a11y_chit:'অর্ডার চিট', a11y_fb:'ফেসবুক', a11y_wa:'হোয়াটসঅ্যাপ',
+    sync_cart:'অন্য ট্যাবে অর্ডার চিট আপডেট হয়েছে।', sync_lang:'অন্য ট্যাবে ভাষা পরিবর্তন হয়েছে।', sync_cat:'অন্য ট্যাবে ক্যাটাগরি পরিবর্তন হয়েছে।',
     about_eyebrow:'আমাদের ফার্মাসিস্ট', about_role:'ডিপ্লোমা ইন মেডিকেল অ্যাসিস্ট্যান্ট (DMA)',
     about_body:'নোয়াখালী প্যারামেডিকেল কলেজ (MATS) থেকে পাস। প্রাক্তন মেডিকেল অ্যাসিস্ট্যান্ট, ২৫০ শয্যা জেনারেল হাসপাতাল, নোয়াখালী এবং প্রাক্তন ইমার্জেন্সি মেডিকেল অ্যাসিস্ট্যান্ট, কাশিপুর আল-হাবিব হাসপাতাল ও কাশিপুর লাইফ লাইন হাসপাতাল।',
     about_reg:'রেজিস্ট্রেশন নম্বর ২৩৩১৪১',
@@ -509,6 +511,23 @@ function restoreCat(){
     const v = localStorage.getItem(CAT_KEY);
     if(CATEGORIES.some(c=>c.key===v)) state.activeCat = v;
   }catch(e){ /* storage unavailable */ }
+}
+const COD_KEY = 'dp_cod';
+const COD_LIMITS = { name:120, phone:30, address:300, note:300 };
+function saveCod(){
+  try{ localStorage.setItem(COD_KEY, JSON.stringify({name: codState.name, phone: codState.phone, address: codState.address, note: codState.note})); }catch(e){ /* storage unavailable */ }
+}
+function restoreCod(){
+  try{
+    const raw = localStorage.getItem(COD_KEY);
+    if(!raw) return;
+    const parsed = JSON.parse(raw);
+    if(!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
+    ['name','phone','address','note'].forEach(k=>{
+      const v = parsed[k];
+      if(typeof v === 'string') codState[k] = v.slice(0, COD_LIMITS[k]);
+    });
+  }catch(e){ /* corrupt or unavailable storage */ }
 }
 function saveLang(){
   try{ localStorage.setItem(LANG_KEY, state.lang); }catch(e){ /* storage unavailable */ }
@@ -658,7 +677,7 @@ function renderCart(){
 
   const foot = document.getElementById('chitFoot');
   if(ids.length===0){
-    codState.open = false; codState.name = codState.phone = codState.address = codState.note = '';
+    codState.open = false;
     foot.innerHTML = `
       <div class="subtotal-row"><span>${t('subtotal')}</span><span class="mono">${fmt(0)}</span></div>
       <button class="btn btn-whatsapp btn-block" disabled><svg><use href="#icon-whatsapp"/></svg>${t('btn_whatsapp')}</button>
@@ -672,10 +691,10 @@ function renderCart(){
     <a class="btn btn-outline btn-block" href="tel:${CONTACT.phone}" id="btnCall"><svg><use href="#icon-phone"/></svg>${t('btn_call')}</a>
     <button class="cod-link" id="codToggle">${t('cod_toggle')}</button>
     <form class="cod-form" id="codForm">
-      <div><label>${t('cod_name')}</label><input type="text" id="codName" required></div>
-      <div><label>${t('cod_phone')}</label><input type="tel" id="codPhone" required></div>
-      <div><label>${t('cod_address')}</label><textarea id="codAddress" required></textarea></div>
-      <div><label>${t('cod_note')}</label><textarea id="codNote"></textarea></div>
+      <div><label>${t('cod_name')}</label><input type="text" id="codName" maxlength="${COD_LIMITS.name}" required></div>
+      <div><label>${t('cod_phone')}</label><input type="tel" id="codPhone" maxlength="${COD_LIMITS.phone}" required></div>
+      <div><label>${t('cod_address')}</label><textarea id="codAddress" maxlength="${COD_LIMITS.address}" required></textarea></div>
+      <div><label>${t('cod_note')}</label><textarea id="codNote" maxlength="${COD_LIMITS.note}"></textarea></div>
       <button type="submit" class="btn btn-primary btn-block">${t('cod_submit')}</button>
       <p class="cod-disclaimer">${t('cod_disclaimer')}</p>
     </form>
@@ -689,7 +708,7 @@ function renderCart(){
   ['codName','codPhone','codAddress','codNote'].forEach(id=>{
     const el = document.getElementById(id);
     el.value = codState[id] || '';
-    el.addEventListener('input', ()=>{ codState[id] = el.value; });
+    el.addEventListener('input', ()=>{ codState[id] = el.value; saveCod(); });
   });
   codForm.classList.toggle('open', codState.open);
   codForm.addEventListener('submit', e=>{
@@ -820,6 +839,7 @@ window.addEventListener('storage', e=>{
     if(CATEGORIES.some(c=>c.key===e.newValue)){
       state.activeCat = e.newValue;
       renderCategories(); renderProducts();
+      showToast(t('sync_cat'));
     }
     return;
   }
@@ -827,6 +847,7 @@ window.addEventListener('storage', e=>{
     if(e.newValue === 'en' || e.newValue === 'bn'){
       state.lang = e.newValue;
       applyStaticI18n(); renderCategories(); renderProducts(); renderCart();
+      showToast(t('sync_lang'));
     }
     return;
   }
@@ -837,6 +858,7 @@ window.addEventListener('storage', e=>{
   }catch(err){ return; }
   renderCart();
   updateCartCount();
+  showToast(t('sync_cart'));
 });
 
 if('IntersectionObserver' in window){
@@ -852,6 +874,7 @@ restoreLang();
 restoreCat();
 applyStaticI18n();
 restoreCart();
+restoreCod();
 renderCategories();
 renderProducts();
 renderCart();
