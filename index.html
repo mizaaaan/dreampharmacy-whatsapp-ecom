@@ -502,21 +502,22 @@ const CART_KEY = 'dp_cart';
 function saveCart(){
   try{ localStorage.setItem(CART_KEY, JSON.stringify({cart: state.cart, orderNo: state.orderNo})); }catch(e){ /* storage unavailable */ }
 }
+function applyCartData(parsed){
+  if(!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
+  // New format: {cart, orderNo}. Legacy format: bare cart object.
+  const cartData = (parsed.cart && typeof parsed.cart === 'object' && !Array.isArray(parsed.cart)) ? parsed.cart : parsed;
+  if(typeof parsed.orderNo === 'string' && /^DP-\d{4,}$/.test(parsed.orderNo)) state.orderNo = parsed.orderNo;
+  const next = {};
+  Object.entries(cartData).forEach(([id,qty])=>{
+    const pid = Number(id);
+    if(Number.isInteger(qty) && qty > 0 && PRODUCTS.some(p=>p.id===pid)) next[pid] = qty;
+  });
+  state.cart = next;
+}
 function restoreCart(){
   try{
     const raw = localStorage.getItem(CART_KEY);
-    if(!raw) return;
-    const parsed = JSON.parse(raw);
-    if(!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
-    // New format: {cart, orderNo}. Legacy format: bare cart object.
-    const cartData = (parsed.cart && typeof parsed.cart === 'object' && !Array.isArray(parsed.cart)) ? parsed.cart : parsed;
-    if(typeof parsed.orderNo === 'string' && /^DP-\d{4,}$/.test(parsed.orderNo)) state.orderNo = parsed.orderNo;
-    const next = {};
-    Object.entries(cartData).forEach(([id,qty])=>{
-      const pid = Number(id);
-      if(Number.isInteger(qty) && qty > 0 && PRODUCTS.some(p=>p.id===pid)) next[pid] = qty;
-    });
-    state.cart = next;
+    if(raw) applyCartData(JSON.parse(raw));
   }catch(e){ /* corrupt or unavailable storage */ }
 }
 
@@ -791,6 +792,16 @@ document.addEventListener('click', e=>{
   const btn = document.getElementById('hamburgerBtn');
   if(!nav.classList.contains('open') || nav.contains(e.target) || btn.contains(e.target)) return;
   closeMobileNav();
+});
+
+window.addEventListener('storage', e=>{
+  if(e.key !== CART_KEY) return;
+  try{
+    if(e.newValue === null) state.cart = {};
+    else applyCartData(JSON.parse(e.newValue));
+  }catch(err){ return; }
+  renderCart();
+  updateCartCount();
 });
 
 if('IntersectionObserver' in window){
