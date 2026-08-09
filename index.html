@@ -435,7 +435,7 @@ const I18N = {
     cod_name:'Full name', cod_phone:'Phone number', cod_address:'Delivery address', cod_note:'Order note (optional)',
     cod_submit:'Confirm Cash on Delivery order', cod_disclaimer:"We'll message you on WhatsApp to confirm your order and delivery time.",
     btn_whatsapp:'Send Order on WhatsApp', btn_call:'Call to Order',
-    toast_empty:'Add an item to your chit first.', toast_whatsapp:'Opening WhatsApp…', toast_cod:'Opening WhatsApp to confirm your order…',
+    toast_empty:'Add an item to your chit first.', toast_whatsapp:'Opening WhatsApp…', toast_cod:'Opening WhatsApp to confirm your order…', toast_added:'Added to your chit.',
     about_eyebrow:'OUR PHARMACIST', about_role:'Diploma in Medical Assistant (DMA)',
     about_body:'Graduate of Noakhali Paramedical College (MATS). Former Medical Assistant at the 250 Bed General Hospital, Noakhali, and former Emergency Medical Assistant at Kashipur Al-Habib Hospital and Kashipur Life Line Hospital.',
     about_reg:'Registration No. 233141',
@@ -461,7 +461,7 @@ const I18N = {
     cod_name:'পূর্ণ নাম', cod_phone:'ফোন নম্বর', cod_address:'ডেলিভারি ঠিকানা', cod_note:'অর্ডার নোট (ঐচ্ছিক)',
     cod_submit:'ক্যাশ অন ডেলিভারি অর্ডার নিশ্চিত করুন', cod_disclaimer:'আপনার অর্ডার ও ডেলিভারির সময় নিশ্চিত করতে আমরা হোয়াটসঅ্যাপে বার্তা পাঠাবো।',
     btn_whatsapp:'হোয়াটসঅ্যাপে অর্ডার পাঠান', btn_call:'কল করে অর্ডার করুন',
-    toast_empty:'প্রথমে আপনার চিটে একটি পণ্য যোগ করুন।', toast_whatsapp:'হোয়াটসঅ্যাপ খোলা হচ্ছে…', toast_cod:'অর্ডার নিশ্চিত করতে হোয়াটসঅ্যাপ খোলা হচ্ছে…',
+    toast_empty:'প্রথমে আপনার চিটে একটি পণ্য যোগ করুন।', toast_whatsapp:'হোয়াটসঅ্যাপ খোলা হচ্ছে…', toast_cod:'অর্ডার নিশ্চিত করতে হোয়াটসঅ্যাপ খোলা হচ্ছে…', toast_added:'আপনার চিটে যোগ হয়েছে।',
     about_eyebrow:'আমাদের ফার্মাসিস্ট', about_role:'ডিপ্লোমা ইন মেডিকেল অ্যাসিস্ট্যান্ট (DMA)',
     about_body:'নোয়াখালী প্যারামেডিকেল কলেজ (MATS) থেকে পাস। প্রাক্তন মেডিকেল অ্যাসিস্ট্যান্ট, ২৫০ শয্যা জেনারেল হাসপাতাল, নোয়াখালী এবং প্রাক্তন ইমার্জেন্সি মেডিকেল অ্যাসিস্ট্যান্ট, কাশিপুর আল-হাবিব হাসপাতাল ও কাশিপুর লাইফ লাইন হাসপাতাল।',
     about_reg:'রেজিস্ট্রেশন নম্বর ২৩৩১৪১',
@@ -527,7 +527,8 @@ function renderProducts(){
 
 function addToCart(id){
   state.cart[id] = (state.cart[id]||0) + 1;
-  renderCart(); updateCartCount(); openDrawer();
+  renderCart(); updateCartCount();
+  showToast(t('toast_added'));
 }
 function changeQty(id, delta){
   if(!state.cart[id]) return;
